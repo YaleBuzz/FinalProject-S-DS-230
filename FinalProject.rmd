@@ -1,0 +1,396 @@
+---
+title: "Final Project: Elite at What Cost? Analyzing the Value of the Ivy League"
+output:
+  pdf_document: default
+  html_notebook: default
+---
+
+
+
+$\\$
+
+
+
+## Author:  Ryan Schiller
+
+
+
+
+
+
+
+
+<!--  
+
+
+This is a template for creating your final project report. It lays out the sections that should be in your write-up and describes a little about these sections. There is some flexibility to deviate from this structure, for example, interweaving more visualizations and analyses could work well. 
+
+Your report should be between 5-8 pages long and should contain:
+
+    1) Introduction: 
+      a) what is question you are addressing 
+      b) why is important 
+      c) where you got the data
+      d) description of any other analyses that been done on the data
+      
+    2) Visualizations of the data: one or more plots
+    
+    3) Analyses: models, hypothesis tests, confidence intervals and other inferential statistics that give insight into your question
+    
+    4) Conclusions: What you found, future directions, etc.
+    
+    5) Reflection (do be completed on Canvas)
+       a) What went well 
+       b) What did you struggle with
+       c) What analyses did you do that you are not including, etc. 
+
+Please make your report look good by paying attention to detail, using additional R Markdown features etc. 
+
+If there is additional code or data you would like to include with your report, please create a github page and add a link to it in your report. Additionally, you can append the full code for your analysis in an appendix section at the end of the document, and then include only the most important pieces of code in the body of the report. For example, you can exclude details of data cleaning from the body of the report, but include anything of central to your analyses, and also any information about particular choices you made that might affect the results and why you made those choices (e.g., explain if data was excluded and why, etc.). 
+
+
+
+--> 
+
+
+
+
+
+$\\$
+
+
+
+
+<!-- There are some options that might help make your document look better.  
+Feel free to add adddtional options here -->
+```{r message=FALSE, warning=FALSE, tidy=TRUE, echo=FALSE}
+    library(knitr)
+    library(ggplot2)
+    library(dplyr)
+library(readr)
+    # This makes sure the code is wrapped to fit when it creats a pdf
+    opts_chunk$set(tidy.opts=list(width.cutoff=60))   
+    
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Introduction 
+
+Is going to an Ivy League school worth it? Many students including myself had to come to terms with this question when making decisions about which college to attend. For example, all National Merit Semifinalists receive full-ride or full-tuition to a number of [state schools](https://www.mykidscollegechoice.com/2013/11/13/do-national-merit-finalists-get-full-ride-scholarships/). When compared to the hefty tuition at Yale, this seems like a good deal. Assuming they are paying the full tuition, a Yale undergrad will pay 72,100 dollars per year (https://student-accounts.yale.edu/tuition-and-fees). That is 288400 dollars for the entire undergraduate education. Is an Ivy League education really worth that much? I answer the question by comparing the starting and mid-career salaries of Ivy League graduates to those of top state school graduates.
+
+I got my data for starting and mid-career salaries from [Kaggle.com](kaggle.com/wsj/college-salaries). They lifted this dataset from the Washington Post. The Washington Post has done some analysis and reported on the data already. The Post found that Ivy League graduates earn 99% more 10 years out than they did at graduation (http://online.wsj.com/public/resources/documents/info-Salaries_for_Colleges_by_Type-sort.html). I got most of my data for the 25th percentile math SAT scores from [College Scorecard](https://collegescorecard.ed.gov/data/). I found the SAT data for Arizona [here](https://www.prepscholar.com/sat/s/colleges/University-of-Arizona-SAT-scores-GPA), Washington [here](https://admit.washington.edu/apply/freshman/by-the-numbers/), Washington-Madison [here](https://www.prepscholar.com/sat/s/colleges/University-of-Wisconsin---Madison-admission-requirements), and California State University-East Bay [here](https://www.prepscholar.com/sat/s/colleges/Cal-State-East-Bay-admission-requirements)
+<!--  
+
+Write ~1-3 paragraphs describing:
+
+1) What is problem you are addressing and why the problem you are addressing is interesting
+
+2) Where you got the data from, including a link to the website where you got the data if applicable 
+
+3) What other analyses have already been done with the data and possibly links to other analyses, also mention if you are using the data in another class or for another research project. 
+
+
+--> 
+
+
+
+
+
+   
+$\\$   
+   
+    
+
+
+
+
+## Results
+
+
+
+$\\$
+    
+
+
+### Data wrangling: Filtering and Sorting For the Starting and Mid-Career Salaries of the Ivy League and Top State Schools.
+```{r message=FALSE, warning=FALSE, tidy=TRUE}
+colleges_that_pay <- read.csv("/Users/invierno/Downloads/college-salaries\ 2/salaries-by-college-type.csv", header = TRUE)
+ivy <- colleges_that_pay$School.Type == "Ivy League"
+ivy_data <- colleges_that_pay[ivy,]
+ivy_data$Starting.Median.Salary <- as.numeric(gsub('[$,]', '',ivy_data$Starting.Median.Salary))
+ivy_data$Mid.Career.Median.Salary <- as.numeric(gsub('[$,]', '',ivy_data$Mid.Career.Median.Salary))
+ivy_data <- ivy_data[order(ivy_data$Starting.Median.Salary),]
+ivy_data <- droplevels(ivy_data)
+ivy_data <- na.omit(ivy_data)
+state <- colleges_that_pay$School.Type == "State"
+state_data <- colleges_that_pay[state,]
+state_data <- state_data %>% arrange(desc(Starting.Median.Salary)) %>% slice(1:30)
+state_data$Starting.Median.Salary <- as.numeric(gsub('[$,]', '',state_data$Starting.Median.Salary))
+state_data$Mid.Career.Median.Salary <- as.numeric(gsub('[$,]', '',state_data$Mid.Career.Median.Salary))
+state_data <- state_data[order(state_data$Starting.Median.Salary),]
+state_data <- droplevels(state_data)
+state_data <- na.omit(state_data)
+ivy_or_state_data <- merge(state_data, ivy_data, all.x = TRUE, all.y = TRUE)
+ivy_or_state_data$Starting.Median.Salary <- as.numeric(gsub('[$,]', '',ivy_or_state_data$Starting.Median.Salary))
+ivy_or_state_data$Mid.Career.Median.Salary <- as.numeric(gsub('[$,]', '',ivy_or_state_data$Mid.Career.Median.Salary))
+ivy_or_state_data <- ivy_or_state_data[order(ivy_or_state_data$Starting.Median.Salary),]
+ivy_or_state_data <- droplevels(ivy_or_state_data)
+ivy_or_state_data <- na.omit(ivy_or_state_data)
+ivy_or_state_data$SAT_MT <- c(490, 530, 550, 470, 540, 470, 590, 600, 620, 670, 450, 620, 510, 600, 490, 500, 590, 610, 580, 650, 570, 600, 670, 650, 710, 500, 650, 700, 580, 600, 720, 730, 710, 630, 700, 720, 730, 720)
+ivy_or_state_data$life_income <- ivy_or_state_data$Starting.Median.Salary*10 + ivy_or_state_data$Mid.Career.Median.Salary*20
+```
+
+After downloading and importing the data from [Kaggle](kaggle.com/wsj/college-salaries), I filtered for the data from the eight Ivy League Institutions and from the top thirty state schools based on starting salary. All of the wage data were written as factors rather than numerics. This would pose a problem when graphing and running tests because I would not be able to use a continuous scale on my axes, and I would not be able to run mathematical operations like taking the mean on factors. Therefore, I substituted out the dollar signs, spaces, and commas in the data and then turned them into numerics. Finally, I dropped the unused levels to tidy up the data. I then merged the ivy league dataset and the top state school data set to create a combined data set that would be useful for graphing and parametric tests. I manually added the 25th percentile SAT math scores from College Scorecard and from other sources where College Scorecard lacked the data. I created an estimated median lifetime salary by multiplying the starting salary by ten and adding that number to twenty times the mid-career salary.
+
+<!--  
+
+Very briefly discuss how you got the data into shape for your analyses. You can include some code here, although extensive data cleaning code should be put on github or in an appendix at the end of the document. 
+
+--> 
+
+
+
+
+$\\$
+    
+
+
+
+### Visualize the data: Bar Plots of Starting and Mid-Career Salaries for Top State Schools and the Ivy League.
+
+
+
+<!--  
+
+Create one or more plots of your data. Describe the plot(s), what they shows, and why they are of interest to your analysis. Include the code to create these plots in the R chunk below. You can also discuss the plots after the code too. Finally, be sure to make plots as clear as possible (clear axis labeling, legends and captions) so that it is easy for the reader to quickly understand the central information being conveyed. 
+
+--> 
+
+To start, I want to get a sense of the median starting salary coming out of college from either a state school or an Ivy League institution. I also want to see how much graduates are making ten years out of college, in the middle of their career.
+
+
+
+
+```{r message=FALSE, warning=FALSE, tidy=TRUE, echo = FALSE}
+
+
+ggplot(data = ivy_or_state_data, aes(x = reorder(School.Name, Starting.Median.Salary), y = Starting.Median.Salary, fill=factor(School.Type))) + labs(x = "School", y = "Median Starting Salary", title = "Starting Salary: Ivy League and State School Graduates", las = 3) + geom_bar(stat="identity") + theme( axis.text.x = element_text(size=6, angle=90), plot.title = element_text(hjust = .5)) + guides(fill=guide_legend(title="School Type"))
+```
+$\\$
+$\\$
+```{r message=FALSE, warning=FALSE, tidy=TRUE, echo = FALSE}
+require(scales)
+ggplot(data = ivy_or_state_data, aes(x = reorder(School.Name, Mid.Career.Median.Salary), y = Mid.Career.Median.Salary, fill=factor(School.Type))) + labs(x = "School", y = "Median Mid-Career Salary", title = "Mid-Career Salary: Ivy League and State School Graduates", las = 3) + geom_bar(stat="identity") + theme( axis.text.x = element_text(size=6, angle=90), plot.title = element_text(hjust = .5)) + guides(fill=guide_legend(title="School Type")) + scale_y_continuous(labels = comma)
+```
+
+
+
+
+
+
+
+<!--  
+
+Possible additional discussion of the plots here. 
+
+--> 
+Based on the data plotted in the bar graphs, the Ivy league graduates are making at least slightly more than the state school graduates both in terms of starting salary and mid-career salary. However, there is a standout amongst the state schools. Berkeley graduates are earning more in starting salary than Brown, Columbia, Darthmouth, and Yale graduates. Moreover, the Berkeley graduates are still earning more than Brown, Cornell, and Columbia graduates into their mid-career. Also, Cal Poly San Luis and University of Missouri - Rolla graduates are making more in starting salary than Brown graduates. Yet, it looks like the Ivy League students do some catching up in their mid-career, perhaps because they acquired a major in a discipline with higher upward mobility. Before we analyze any further, we should make sure that the increase in salary is statistically significant.
+
+
+
+
+
+
+
+$\\$    
+    
+
+
+
+
+
+
+
+    
+
+### Analyses: Parametric Tests on Salaries 
+
+<!--  
+
+Build linear models, run hypothesis tests, create confidence intervals and/or run simulations to answer questions that are of interest. 
+
+
+--> 
+
+Can we really say that an Ivy League graduate makes more than a graduate of a top state school? Is the increase in salary statistically significant? Let's run a parametric test to find out.
+
+We start with a parametric test to view two means of the median starting salaries for the Ivy League graduates and top State School graduates.
+
+**Null and Alternative Hypothesis:**
+
+$H_0: \mu_{Ivy} - \mu_{State} = 0$
+$H_A: \mu_{Ivy} - \mu_{State} > 0$ 
+
+
+$\alpha = 0.05$
+
+**In Words:**
+
+The null hypothesis is that on average, the starting median salary of the ivy league graduate is the same as the median salary of the state school graduate.
+
+The alternative hypothesis is that on average, the starting median salary of the ivy league graduate is the greater than the median salary of the state school graduate. 
+
+```{r message=FALSE, warning=FALSE, tidy=TRUE, echo = FALSE}
+
+obs_stat <- mean(ivy_data$Starting.Median.Salary) - mean(state_data$Starting.Median.Salary)
+null_dist <- NULL
+for (i in 1:100000){
+shuff_data <- sample(ivy_or_state_data$Starting.Median.Salary)
+ shuff_ivy <- shuff_data[1:8]
+ shuff_state <- shuff_data[9:38]
+ null_dist[i] <- mean(shuff_ivy) - mean(shuff_state)
+}
+hist(null_dist, main = "Null Distribution for Starting Salaries of Top School Graduates", xlab = "Mean Stat", ylab= "Starting Salary")
+abline(col = "red", v = obs_stat)
+(p_value <- sum(null_dist >= obs_stat) / length(null_dist))
+starting_salary <- obs_stat
+t.test(ivy_data$Starting.Median.Salary,state_data$Starting.Median.Salary)
+starting_salary
+```
+
+The p-value is less than 1/1000. So Ivy Leaguers do indeed make more after graduation by a statistically significant amount since the p-value is less than the alpha level. We also note a confidence interval of 6726.561 to 12343.439 dollars for the starting salary based on the Welch's T-test.
+
+Similarly, we check to see if Mid-Career Median Salary is statistically significantly higher among Ivy League graduates.
+
+
+
+**Null and Alternative Hypothesis:**
+
+$H_0: \mu_{Ivy} - \mu_{State} = 0$
+$H_A: \mu_{Ivy} - \mu_{State} > 0$ 
+
+
+$\alpha = 0.05$
+
+**In Words:**
+
+The null hypothesis is that on average, the median mid-career salary of the ivy league graduate is the same as the median salary of the state school graduate. 
+
+The alternative hypothesis is that on average, the median mid-career salary of the ivy league graduate is the greater than the median mid-career salary of the state school graduate. 
+
+
+
+```{r message=FALSE, warning=FALSE, tidy=TRUE, echo = FALSE}
+
+obs_stat <- mean(ivy_data$Mid.Career.Median.Salary) - mean(state_data$Mid.Career.Median.Salary)
+null_dist <- NULL
+for (i in 1:100000){
+shuff_data <- sample(ivy_or_state_data$Mid.Career.Median.Salary)
+ shuff_ivy <- shuff_data[1:8]
+ shuff_state <- shuff_data[9:28]
+ null_dist[i] <- mean(shuff_ivy) - mean(shuff_state)
+}
+hist(null_dist, main = "Null Distribution for Mid-Career Salaries of Top School Graduates", xlab = "Mean Stat", ylab= "Mid-Career Salary")
+abline(col = "red", v = obs_stat)
+(p_value <- sum(null_dist >= obs_stat) / length(null_dist))
+mid_salary <- obs_stat
+
+t.test(ivy_data$Mid.Career.Median.Salary,state_data$Mid.Career.Median.Salary)
+
+```
+
+The p-value is less than 1/10000. So Ivy Leaguers continue to make more into their mid-career by a statistically significant amount since the p-value is less than the alpha level. We also note a confidence interval of 18305.51 to 36004.49 based on the Welch's T-Test.
+
+Now, we found that graduates of Ivy League schools are making 9535 dollars more out of college and 27155 dollars more ten years out of college. So we estimate the amount more that they will make lifetime by multiplying the difference in starting salary by 10 then the difference in career salary by 20. We then take the sum to get the difference in lifetime earnings.
+
+Then we do linear regression to see 
+
+
+```{r message=FALSE, warning=FALSE, tidy=TRUE}
+income_difference <- mid_salary * 20 + starting_salary * 10
+income_difference
+```
+
+So they could expect to earn 638450 dollars more than their state school peers over their lifetime. That is really not a great investment considering that if you instead put that 288400 dollars into the stock market for 30 years, considering the stock market's [average returns of 10%](https://www.nerdwallet.com/blog/investing/average-stock-market-return/), we would expect to have [5,790,289 dollars by the end of our investment window.](https://www.investor.gov/additional-resources/free-financial-planning-tools/compound-interest-calculator) 
+
+Additionally, one might ask if the Ivy League name even matters. Is it really just about the students' SAT scores? To explore this question we run a multiple regression on the Income vs the Ivy name and the SAT Math 25th percentile of the student body.
+
+```{r message=FALSE, warning=FALSE, tidy=TRUE}
+lm_math_money <- (lm(ivy_or_state_data$life_income~ivy_or_state_data$School.Type+ivy_or_state_data$SAT_MT))
+lm_math_money_comparison <- (lm(ivy_or_state_data$life_income~ivy_or_state_data$School.Type+ivy_or_state_data$SAT_MT+ivy_or_state_data$School.Type*ivy_or_state_data$SAT_MT))
+
+equation1=function(x){coef(lm_math_money)[3]*x+coef(lm_math_money)[1]}
+equation2=function(x){coef(lm_math_money)[3]*x+coef(lm_math_money)[1] + coef(lm_math_money)[2]}
+
+ggplot(ivy_or_state_data, aes(y=life_income,x=SAT_MT,color=School.Type))+geom_point() + labs(x = "SAT Math 25th Percentile", y = "Lifetime Salary", title = "Math SAT vs Lifetime Salary", las = 3) + theme(axis.text.x = element_text(size=6, angle=90), plot.title = element_text(hjust = .5)) + stat_function(fun=equation1,geom="line",color=scales::hue_pal()(2)[1])+  stat_function(fun=equation2,geom="line",color=scales::hue_pal()(2)[2])
+```
+
+$\\$
+
+According to our basic linear model, a state school grad would have to earn over a 1000 on the math section to expect to earn as much as an Ivy grad who scored a 700 on the math section. This is literally impossible, highlighting the benefit of going to an Ivy.
+    
+    
+    
+    
+    
+    
+
+
+## Conclusion 
+
+
+
+<!--  
+
+
+
+1-2 paragraphs summarizing what you found, how the findings address your question of interest, and possible future directions. Please make sure describe your conclusions in an intuitive way, and make sure that your argument is strong and backed by solid evidence from your data. 
+
+
+
+-->
+
+
+We found that Ivy League graduates have a median starting salary and mid-career salary that is higher than their peers at top state schools. Based on the regression model, the "Ivy bump" is a very real phenomenon. Ivy league grads are in a nearly unobtainable bracket when it comes to salary expectations compared to state school graduates. However, the increase in salary is insufficient to offset the steep tuition of attending these institutions. If graduates experience linear salary growth, based on my simple model, students will never recomp the money that they could have earned by investing the money into the market.
+
+There are more factors to be considered. Not all majors are created equal. Perhaps some majors may benefit more from the Ivy League degree than others. Moreover, not all students are created equal. This idea works both ways. Some students may thrive in the Ivy League while others might prefer to be at a State School. It may be better for a bright student to be a star at his state school than to be in the bottom quartile at an Ivy League institution. Assuming that the quality of students is higher at an Ivy, it might not be reasonable to conclude that the same student who would earn the median starting salary after graduating from a state school would also earn the median starting salary after graduating from an Ivy League school. On the other hand, it could be that the student who turned down a full ride from a state school in order to attend an Ivy League school might be more motivated to take advantage of the opportunities available at the Ivy League school and make more than he would have at a state school. Many of these considerations are person dependent. With that said, some of the benefits of attending an Ivy League school do not directly translate into income. Perhaps the knowledge that the students gain can help them to be better at investing and saving their money. The connections could help them to attend more expensive parties or have lavish trips/experiences. In addition, there are non-pecuniary benefits. I suspect many students choose the Ivy because of the pride and status attached to the Ivy name. To get a better sense of whether it is worth it to pay tuition at an Ivy versus attending a top state school on a full ride, we need a large-n, longterm, longitudinal study of students who turned down the Ivy League in order to accurately compare them to their Ivy League peers.
+
+$\\$
+
+
+
+
+
+
+## Reflection
+
+
+<!--  
+
+
+Reflection  
+
+Write one paragraph describing what went well with this project and what was more difficult. Also describe any additional things you tried that you did not end up including in this write-up, and approximately how much time you spend working the project. 
+
+Finally, please go to Canvas and answer a few questions related to how this project went: https://yale.instructure.com/courses/51220/quizzes/20279
+
+
+
+-->
+
+I spent around 15 hours on this project. The majority of my time was spent finding the right dataset to work on and coming up with an interesting question. At first, I tried looking at the data for app store downloads, but the data was too messy because most apps get very few downloads while a few apps get millions. It is difficult to derive very much interesting information from this sort of data. Then, I wanted to see if I could predict my income based on my major or see which of my majors (Math or Global Affairs) would be more lucrative. I wanted to model myself against my peers, but I couldn't find a large enough, non-aggregated data set. Finally, I tried to see if I could model my chance of divorce, but the datasets that I found did not account for the sorts of variables that I was interested in learning about. Once I settled on the Ivy League vs. state school project, most of my time was spent data wrangling. I wanted to use both math and verbal SAT scores, but there was too much correlation between the two statistics (over 95%). So, I went with just Math SAT 25th percentiles. I chose 25th Percentiles because I suspected that there would be a larger difference between the top schools among their lowest scorers. I learned a lot about graphing and wrangling from this project.
+
+
